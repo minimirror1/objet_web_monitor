@@ -51,31 +51,58 @@ npm run dev
 
 ## 🚀 프로덕션 배포
 
-### 빌드
+### A. Node.js 직접 실행
 
 ```bash
 cd frontend
 npm run build
-```
-
-생성 결과:
-- `.next/` 디렉토리: 최적화된 번들
-- 빌드 캐시 및 정적 파일 포함
-
-### 서버 실행
-
-```bash
 npm run start
 ```
 
-- **기본 포트**: 3000 (PORT 환경변수로 변경 가능)
-- **프로덕션 최적화**: 자동 활성화
+- **기본 포트**: 3000 (`PORT` 환경변수로 변경 가능)
 
-### 환경변수 설정 (프로덕션)
+### B. Docker Compose 실행 (권장)
 
 ```bash
-# .env.production 또는 환경변수 직접 설정
-export NEXT_PUBLIC_API_BASE_URL=https://robot-monitor-dev.systemiic.com
+# 1. 환경변수 설정
+cp frontend/.env.example .env
+# .env 파일에서 NEXT_PUBLIC_API_BASE_URL 등 설정
+
+# 2. 이미지 빌드 & 실행
+docker compose up -d --build
+
+# 3. 로그 확인
+docker compose logs -f frontend
+```
+
+- `http://서버IP:80` 으로 접속 (Nginx → Next.js)
+- **API_BASE_URL 변경 시 반드시 이미지 재빌드 필요** (`NEXT_PUBLIC_*` 는 빌드 타임 번들링)
+
+```bash
+# 재빌드
+docker compose build --build-arg NEXT_PUBLIC_API_BASE_URL=https://new-api.example.com frontend
+docker compose up -d frontend
+```
+
+### C. GitHub Actions 자동 배포
+
+`main` 브랜치 push 시 자동으로 이미지 빌드 → ghcr.io 푸시 → 서버 SSH 배포.
+
+**필요한 GitHub Secrets 설정 (`Settings → Secrets → Actions`):**
+
+| Secret | 설명 |
+|--------|------|
+| `NEXT_PUBLIC_API_BASE_URL` | API 서버 URL |
+| `DEPLOY_HOST` | 배포 서버 IP 또는 도메인 |
+| `DEPLOY_USER` | SSH 사용자명 |
+| `DEPLOY_SSH_KEY` | SSH 개인키 (PEM) |
+
+### 환경변수 설정
+
+```bash
+# .env (docker-compose 용, 커밋 금지)
+NEXT_PUBLIC_API_BASE_URL=https://robot-monitor-dev.systemiic.com
+# NEXT_PUBLIC_API_TOKEN=your-token
 ```
 
 ---
