@@ -1,0 +1,23 @@
+# 환경변수 (절대 커밋 금지)
+.env
+.env.local
+.env.production
+
+# Nginx SSL 인증서
+nginx/certs/
+
+# Next.js 빌드 결과물
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# 의존성
+frontend/node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 에디터
+.vscode/
+.idea/
