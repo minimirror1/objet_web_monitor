@@ -150,18 +150,18 @@ app/
 
 ### Phase 5: 실시간 모니터링 (SSE)
 
-- [ ] useSSE 커스텀 훅 구현
+- [x] useSSE 커스텀 훅 구현
   - 자동 재연결
   - Last-Event-ID 지원
   - 연결 상태 표시 (connected/disconnected/reconnecting)
-- [ ] PC 헬스체크 실시간 모니터링
+- [x] PC 헬스체크 실시간 모니터링
   - `GET /v1/service/stores/{store_id}/pcs/{pc_id}/health` (SSE)
   - 온라인/오프라인 상태 인디케이터
   - 연결 끊김 시 자동 재연결
-- [ ] 오브제 전원 상태 실시간 수신
+- [x] 오브제 전원 상태 실시간 수신
   - `GET /v1/service/objects/{object_id}/power` (SSE)
   - 전원 상태 변경 시 UI 즉시 반영
-- [ ] 이벤트 전송 기능
+- [x] 이벤트 전송 기능
   - `POST /v1/service/stores/send-event`
   - ON/OFF/REBOOT 이벤트
 
