@@ -1,6 +1,12 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DAYS_OF_WEEK, type DayOfWeek } from "@/lib/types/store";
 import type { Control } from "react-hook-form";
 import { Controller } from "react-hook-form";
@@ -14,6 +20,57 @@ const DAY_LABELS: Record<DayOfWeek, string> = {
   SAT: "토",
   SUN: "일",
 };
+
+const HOURS = Array.from({ length: 24 }, (_, i) =>
+  String(i).padStart(2, "0")
+);
+const MINUTES = ["00", "15", "30", "45"];
+
+function TimeSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+}) {
+  const [hour, minute] = (value ?? "00:00").split(":");
+
+  return (
+    <div className="flex gap-1">
+      <Select
+        value={hour ?? "00"}
+        onValueChange={(h) => onChange(`${h}:${minute ?? "00"}`)}
+      >
+        <SelectTrigger size="sm" className="w-[58px] px-2">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="max-h-48">
+          {HOURS.map((h) => (
+            <SelectItem key={h} value={h}>
+              {h}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <span className="flex items-center text-sm text-muted-foreground">:</span>
+      <Select
+        value={minute ?? "00"}
+        onValueChange={(m) => onChange(`${hour ?? "00"}:${m}`)}
+      >
+        <SelectTrigger size="sm" className="w-[64px] px-2">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {MINUTES.map((m) => (
+            <SelectItem key={m} value={m}>
+              {m}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
 
 interface OperateTimeFieldsProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -35,14 +92,14 @@ export function OperateTimeFields({ control }: OperateTimeFieldsProps) {
             name={`operate_times.${idx}.open_time`}
             control={control}
             render={({ field }) => (
-              <Input type="time" {...field} className="h-8 text-sm" />
+              <TimeSelect value={field.value} onChange={field.onChange} />
             )}
           />
           <Controller
             name={`operate_times.${idx}.close_time`}
             control={control}
             render={({ field }) => (
-              <Input type="time" {...field} className="h-8 text-sm" />
+              <TimeSelect value={field.value} onChange={field.onChange} />
             )}
           />
         </div>

@@ -4,7 +4,8 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+# devDependencies 포함 설치 (typescript 등 빌드 타임에 필요)
+RUN npm ci
 
 
 # ===== Stage 2: 빌드 =====
