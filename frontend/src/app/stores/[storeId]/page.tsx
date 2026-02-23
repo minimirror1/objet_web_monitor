@@ -1,11 +1,19 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { StoreDetailView } from "@/components/stores/store-detail";
 import { useDeleteStore, useStoreDetail } from "@/lib/hooks/use-stores";
@@ -17,15 +25,17 @@ export default function StoreDetailPage({ params }: Params) {
   const router = useRouter();
   const { data: store, isLoading, isError } = useStoreDetail(storeId);
   const { mutateAsync: deleteStore, isPending: isDeleting } = useDeleteStore();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  async function handleDelete() {
-    if (!confirm(`"${store?.store_name}" 매장을 삭제하시겠습니까?`)) return;
+  async function handleDeleteConfirm() {
     await deleteStore(storeId);
+    setShowDeleteDialog(false);
     toast.success("매장이 삭제되었습니다.");
     router.push("/stores");
   }
 
   return (
+    <>
     <main className="p-6 max-w-4xl">
       <div className="flex items-center justify-between mb-6">
         <Breadcrumb items={[
@@ -53,8 +63,30 @@ export default function StoreDetailPage({ params }: Params) {
       )}
 
       {store && (
-        <StoreDetailView store={store} onDelete={handleDelete} isDeleting={isDeleting} />
+        <StoreDetailView store={store} onDelete={() => setShowDeleteDialog(true)} isDeleting={isDeleting} />
       )}
     </main>
+
+    <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <DialogContent showCloseButton={false}>
+        <DialogHeader>
+          <DialogTitle>매장 삭제</DialogTitle>
+          <DialogDescription>
+            <span className="font-medium text-foreground">&quot;{store?.store_name}&quot;</span> 매장을 삭제하시겠습니까?
+            <br />
+            삭제된 데이터는 복구할 수 없습니다.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={isDeleting}>
+            취소
+          </Button>
+          <Button variant="destructive" onClick={handleDeleteConfirm} disabled={isDeleting}>
+            {isDeleting ? "삭제 중..." : "삭제"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
