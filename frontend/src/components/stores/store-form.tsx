@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { OperateTimeFields } from "@/components/stores/operate-time-fields";
-import { COUNTRY_CODES } from "@/lib/utils/constants";
+import { useCountryCodes } from "@/lib/hooks/use-country-codes";
 import { DAYS_OF_WEEK } from "@/lib/types/store";
 import type { StoreDetail } from "@/lib/types/store";
 
@@ -58,6 +58,7 @@ interface StoreFormProps {
 
 export function StoreForm({ defaultValues, onSubmit, isLoading }: StoreFormProps) {
   const router = useRouter();
+  const { allCodes } = useCountryCodes();
 
   const {
     register,
@@ -118,7 +119,7 @@ export function StoreForm({ defaultValues, onSubmit, isLoading }: StoreFormProps
               <SelectValue placeholder="국가 선택" />
             </SelectTrigger>
             <SelectContent>
-              {COUNTRY_CODES.map((code) => (
+              {allCodes.map((code) => (
                 <SelectItem key={code} value={code}>
                   {code}
                 </SelectItem>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,7 +15,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { StoreTable } from "@/components/stores/store-table";
 import { useAllStores, useStores } from "@/lib/hooks/use-stores";
-import { COUNTRY_CODES } from "@/lib/utils/constants";
+import { useCountryCodes } from "@/lib/hooks/use-country-codes";
+import { CountryCodeSettingsDialog } from "@/components/stores/country-code-settings-dialog";
 import type { Store } from "@/lib/types/store";
 
 function StoreListByCountry({
@@ -95,15 +97,29 @@ function StoreListContent({
 export default function StoresPage() {
   const [countryCode, setCountryCode] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const { allCodes } = useCountryCodes();
 
   return (
     <main className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">매장 관리</h1>
-        <Button asChild>
-          <Link href="/stores/new">+ 매장 등록</Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSettingsOpen(true)}
+            title="국가 코드 설정"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
+          <Button asChild>
+            <Link href="/stores/new">+ 매장 등록</Link>
+          </Button>
+        </div>
       </div>
+
+      <CountryCodeSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <Select value={countryCode} onValueChange={setCountryCode}>
@@ -112,7 +128,7 @@ export default function StoresPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">전체</SelectItem>
-            {COUNTRY_CODES.map((code) => (
+            {allCodes.map((code) => (
               <SelectItem key={code} value={code}>
                 {code}
               </SelectItem>
