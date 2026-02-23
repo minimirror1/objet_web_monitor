@@ -11,7 +11,10 @@
       "Bash(cmd /c \"attrib -r -h -s \"\"D:\\\\03_RnD\\\\00_Animatronics\\\\server_manager\\\\frontend\\\\.git\"\" /s /d && rd /s /q \"\"D:\\\\03_RnD\\\\00_Animatronics\\\\server_manager\\\\frontend\\\\.git\"\" && echo done\")",
       "Bash(powershell -Command \"Remove-Item -Recurse -Force ''D:\\\\03_RnD\\\\00_Animatronics\\\\server_manager\\\\frontend\\\\.git''; if \\(-not \\(Test-Path ''D:\\\\03_RnD\\\\00_Animatronics\\\\server_manager\\\\frontend\\\\.git''\\)\\) { Write-Host ''삭제 완료'' } else { Write-Host ''삭제 실패'' }\")",
       "Bash(git rm:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)"
     ]
   }
 }
