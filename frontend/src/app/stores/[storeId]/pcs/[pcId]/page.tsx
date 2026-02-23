@@ -20,8 +20,9 @@ import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { PcHealthBadge } from "@/components/pcs/pc-health-badge";
 import { ObjectPowerBadge } from "@/components/objects/object-power-badge";
 import { useDeletePc, usePc } from "@/lib/hooks/use-pcs";
-import { useObjects } from "@/lib/hooks/use-objects";
+import { useDeleteObjects, useObjects } from "@/lib/hooks/use-objects";
 import { formatDateTime } from "@/lib/utils/format";
+import { cn } from "@/lib/utils";
 
 type Params = { params: Promise<{ storeId: string; pcId: string }> };
 
@@ -38,13 +39,39 @@ export default function PcDetailPage({ params }: Params) {
   const { data: pc, isLoading: pcLoading, isError: pcError } = usePc(storeId, pcId);
   const { data: objects, isLoading: objLoading } = useObjects(storeId, pcId);
   const { mutateAsync: deletePc, isPending: isDeleting } = useDeletePc();
+  const { mutateAsync: deleteObjects, isPending: isBulkDeleting } = useDeleteObjects();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
 
   async function handleDeleteConfirm() {
     await deletePc({ storeId, pcId });
     setShowDeleteDialog(false);
     toast.success("PC가 삭제되었습니다.");
     router.push(`/stores/${storeId}`);
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function exitEditMode() {
+    setIsEditMode(false);
+    setSelectedIds(new Set());
+  }
+
+  async function handleBulkDeleteConfirm() {
+    const ids = Array.from(selectedIds);
+    await deleteObjects(ids);
+    setShowBulkDeleteDialog(false);
+    exitEditMode();
+    toast.success(`${ids.length}개의 오브제가 삭제되었습니다.`);
   }
 
   return (
@@ -115,9 +142,34 @@ export default function PcDetailPage({ params }: Params) {
                   <span className="ml-2 text-sm font-normal text-muted-foreground">({objects.length}개)</span>
                 )}
               </CardTitle>
-              <Button asChild size="sm" variant="outline">
-                <Link href={`/stores/${storeId}/pcs/${pcId}/objects/new`}>+ 오브제 등록</Link>
-              </Button>
+              <div className="flex gap-2">
+                {isEditMode ? (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      disabled={selectedIds.size === 0 || isBulkDeleting}
+                      onClick={() => setShowBulkDeleteDialog(true)}
+                    >
+                      {selectedIds.size > 0 ? `${selectedIds.size}개 삭제` : "삭제"}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={exitEditMode} disabled={isBulkDeleting}>
+                      취소
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    {objects && objects.length > 0 && (
+                      <Button size="sm" variant="outline" onClick={() => setIsEditMode(true)}>
+                        편집
+                      </Button>
+                    )}
+                    <Button asChild size="sm" variant="outline">
+                      <Link href={`/stores/${storeId}/pcs/${pcId}/objects/new`}>+ 오브제 등록</Link>
+                    </Button>
+                  </>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {objLoading && (
@@ -134,31 +186,69 @@ export default function PcDetailPage({ params }: Params) {
 
               {objects && objects.length > 0 && (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {objects.map((obj) => (
-                    <Link
-                      key={obj.id}
-                      href={`/objects/${obj.id}`}
-                      className="flex items-center justify-between rounded-md border p-3 hover:bg-accent transition-colors"
-                    >
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">{obj.object_name}</p>
-                        <div className="flex gap-1.5 items-center">
-                          <ObjectPowerBadge objectId={obj.id} initialPower={obj.power_status} />
-                          <Badge
-                            variant={STATUS_COLOR[obj.operation_status] ?? "outline"}
-                            className="text-xs"
-                          >
-                            {obj.operation_status}
-                          </Badge>
+                  {objects.map((obj) =>
+                    isEditMode ? (
+                      <div
+                        key={obj.id}
+                        onClick={() => toggleSelect(obj.id)}
+                        className={cn(
+                          "flex items-center gap-3 rounded-md border p-3 cursor-pointer transition-colors",
+                          selectedIds.has(obj.id)
+                            ? "border-destructive bg-destructive/5"
+                            : "hover:bg-accent"
+                        )}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(obj.id)}
+                          onChange={() => toggleSelect(obj.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-4 w-4 shrink-0 accent-red-500"
+                        />
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <p className="text-sm font-medium">{obj.object_name}</p>
+                          <div className="flex gap-1.5 items-center">
+                            <ObjectPowerBadge objectId={obj.id} initialPower={obj.power_status} />
+                            <Badge
+                              variant={STATUS_COLOR[obj.operation_status] ?? "outline"}
+                              className="text-xs"
+                            >
+                              {obj.operation_status}
+                            </Badge>
+                          </div>
                         </div>
+                        {obj.error_data && obj.error_data.length > 0 && (
+                          <Badge variant="destructive" className="text-xs shrink-0">
+                            에러 {obj.error_data.length}
+                          </Badge>
+                        )}
                       </div>
-                      {obj.error_data && obj.error_data.length > 0 && (
-                        <Badge variant="destructive" className="text-xs">
-                          에러 {obj.error_data.length}
-                        </Badge>
-                      )}
-                    </Link>
-                  ))}
+                    ) : (
+                      <Link
+                        key={obj.id}
+                        href={`/objects/${obj.id}`}
+                        className="flex items-center justify-between rounded-md border p-3 hover:bg-accent transition-colors"
+                      >
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium">{obj.object_name}</p>
+                          <div className="flex gap-1.5 items-center">
+                            <ObjectPowerBadge objectId={obj.id} initialPower={obj.power_status} />
+                            <Badge
+                              variant={STATUS_COLOR[obj.operation_status] ?? "outline"}
+                              className="text-xs"
+                            >
+                              {obj.operation_status}
+                            </Badge>
+                          </div>
+                        </div>
+                        {obj.error_data && obj.error_data.length > 0 && (
+                          <Badge variant="destructive" className="text-xs">
+                            에러 {obj.error_data.length}
+                          </Badge>
+                        )}
+                      </Link>
+                    )
+                  )}
                 </div>
               )}
             </CardContent>
@@ -166,6 +256,27 @@ export default function PcDetailPage({ params }: Params) {
         </div>
       )}
     </main>
+
+    <Dialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+      <DialogContent showCloseButton={false}>
+        <DialogHeader>
+          <DialogTitle>오브제 삭제</DialogTitle>
+          <DialogDescription>
+            <span className="font-medium text-foreground">{selectedIds.size}개</span>의 오브제를 삭제하시겠습니까?
+            <br />
+            삭제된 데이터는 복구할 수 없습니다.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setShowBulkDeleteDialog(false)} disabled={isBulkDeleting}>
+            취소
+          </Button>
+          <Button variant="destructive" onClick={handleBulkDeleteConfirm} disabled={isBulkDeleting}>
+            {isBulkDeleting ? "삭제 중..." : "삭제"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
       <DialogContent showCloseButton={false}>

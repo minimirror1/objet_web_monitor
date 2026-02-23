@@ -66,6 +66,17 @@ export function useDeleteObject() {
   });
 }
 
+export function useDeleteObjects() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (objectIds: string[]) =>
+      Promise.all(objectIds.map((id) => deleteObject(id))),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["objects"] });
+    },
+  });
+}
+
 export function useSendObjectLog(objectId: string) {
   return useMutation({
     mutationFn: (payload: ObjectLogRequest) => sendObjectLog(objectId, payload),
