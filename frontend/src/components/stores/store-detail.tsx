@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StoreEventPanel } from "@/components/stores/store-event-panel";
 import type { StoreDetail } from "@/lib/types/store";
 import { formatDateTime } from "@/lib/utils/format";
+
+const StoreMiniMap = dynamic(
+  () => import("@/components/stores/store-mini-map").then((m) => m.StoreMiniMap),
+  { ssr: false },
+);
 
 const DAY_LABELS: Record<string, string> = {
   MON: "월",
@@ -34,38 +40,45 @@ export function StoreDetailView({ store, onDelete, isDeleting }: StoreDetailView
           <CardTitle className="text-base">매장 정보</CardTitle>
         </CardHeader>
         <CardContent>
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-            <div>
-              <dt className="text-muted-foreground">매장 ID</dt>
-              <dd className="font-mono mt-0.5">{store.store_id}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">국가</dt>
-              <dd className="mt-0.5">
-                <Badge variant="outline">{store.country_code}</Badge>
-              </dd>
-            </div>
-            <div className="col-span-2">
-              <dt className="text-muted-foreground">주소</dt>
-              <dd className="mt-0.5">{store.address ?? "-"}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">위도</dt>
-              <dd className="mt-0.5">{store.latitude ?? "-"}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">경도</dt>
-              <dd className="mt-0.5">{store.longitude ?? "-"}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">타임존</dt>
-              <dd className="mt-0.5">{store.timezone}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">등록일</dt>
-              <dd className="mt-0.5">{formatDateTime(store.created_at, store.timezone)}</dd>
-            </div>
-          </dl>
+          <div className="flex gap-6">
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm flex-1 min-w-0">
+              <div>
+                <dt className="text-muted-foreground">매장 ID</dt>
+                <dd className="font-mono mt-0.5">{store.store_id}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">국가</dt>
+                <dd className="mt-0.5">
+                  <Badge variant="outline">{store.country_code}</Badge>
+                </dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="text-muted-foreground">주소</dt>
+                <dd className="mt-0.5">{store.address ?? "-"}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">위도</dt>
+                <dd className="mt-0.5">{store.latitude ?? "-"}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">경도</dt>
+                <dd className="mt-0.5">{store.longitude ?? "-"}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">타임존</dt>
+                <dd className="mt-0.5">{store.timezone}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">등록일</dt>
+                <dd className="mt-0.5">{formatDateTime(store.created_at, store.timezone)}</dd>
+              </div>
+            </dl>
+            {store.latitude != null && store.longitude != null && (
+              <div className="w-48 h-40 shrink-0 rounded-lg overflow-hidden border">
+                <StoreMiniMap latitude={store.latitude} longitude={store.longitude} />
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
