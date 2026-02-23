@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Menu, Moon, Sun } from "lucide-react";
+import { ChevronLeft, Menu, Moon, Sun } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -13,10 +14,16 @@ import { SidebarNav } from "@/components/layout/sidebar";
 import { useAuth } from "@/providers/auth-provider";
 import { useTheme } from "@/providers/theme-provider";
 
+const ROOT_PATHS = ["/", "/stores"];
+
 export function Header() {
   const { logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const isRoot = ROOT_PATHS.includes(pathname);
 
   return (
     <header className="flex items-center justify-between shrink-0 border-b bg-card px-4 py-3">
@@ -35,6 +42,17 @@ export function Header() {
             <SidebarNav onNavigate={() => setOpen(false)} />
           </SheetContent>
         </Sheet>
+
+        {!isRoot && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.back()}
+            title="뒤로가기"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        )}
 
         <span className="text-sm font-semibold text-foreground">
           Server Manager
