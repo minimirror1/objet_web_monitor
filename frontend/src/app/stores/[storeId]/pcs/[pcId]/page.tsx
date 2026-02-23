@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -8,6 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { PcHealthBadge } from "@/components/pcs/pc-health-badge";
 import { ObjectPowerBadge } from "@/components/objects/object-power-badge";
@@ -30,15 +38,17 @@ export default function PcDetailPage({ params }: Params) {
   const { data: pc, isLoading: pcLoading, isError: pcError } = usePc(storeId, pcId);
   const { data: objects, isLoading: objLoading } = useObjects(storeId, pcId);
   const { mutateAsync: deletePc, isPending: isDeleting } = useDeletePc();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  async function handleDelete() {
-    if (!confirm(`"${pc?.pc_name}" PC를 삭제하시겠습니까?`)) return;
+  async function handleDeleteConfirm() {
     await deletePc({ storeId, pcId });
+    setShowDeleteDialog(false);
     toast.success("PC가 삭제되었습니다.");
     router.push(`/stores/${storeId}`);
   }
 
   return (
+    <>
     <main className="p-6 max-w-4xl">
       {/* 브레드크럼 */}
       <div className="flex items-center justify-between mb-6">
@@ -51,7 +61,7 @@ export default function PcDetailPage({ params }: Params) {
           <Button asChild variant="outline" size="sm">
             <Link href={`/stores/${storeId}/pcs/${pcId}/edit`}>수정</Link>
           </Button>
-          <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleting}>
+          <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)} disabled={isDeleting}>
             {isDeleting ? "삭제 중..." : "삭제"}
           </Button>
         </div>
@@ -156,5 +166,27 @@ export default function PcDetailPage({ params }: Params) {
         </div>
       )}
     </main>
+
+    <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <DialogContent showCloseButton={false}>
+        <DialogHeader>
+          <DialogTitle>PC 삭제</DialogTitle>
+          <DialogDescription>
+            <span className="font-medium text-foreground">&quot;{pc?.pc_name}&quot;</span> PC를 삭제하시겠습니까?
+            <br />
+            삭제된 데이터는 복구할 수 없습니다.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={isDeleting}>
+            취소
+          </Button>
+          <Button variant="destructive" onClick={handleDeleteConfirm} disabled={isDeleting}>
+            {isDeleting ? "삭제 중..." : "삭제"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
