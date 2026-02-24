@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Map, { Marker as MapMarker } from "react-map-gl/maplibre";
+import type { MapRef } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { MapStore } from "@/lib/types/map-store";
 import { useTheme } from "@/providers/theme-provider";
+import { COUNTRIES, COUNTRY_VIEWS, WORLD_VIEW } from "@/lib/utils/constants";
 
 const MAP_THEMES = {
   dark: {
@@ -113,6 +115,106 @@ function LegendItem({
   );
 }
 
+function CyberCountrySelect({
+  value,
+  onChange,
+  t,
+}: {
+  value: string;
+  onChange: (code: string) => void;
+  t: typeof MAP_THEMES[keyof typeof MAP_THEMES];
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const current = value ? COUNTRIES.find((c) => c.code === value) : null;
+
+  const itemStyle = (isSelected: boolean): React.CSSProperties => ({
+    width: "100%",
+    textAlign: "left",
+    background: isSelected ? "rgba(0,212,255,0.1)" : "transparent",
+    border: "none",
+    color: isSelected ? t.labelAccent : t.legendLabel,
+    fontFamily: "monospace",
+    fontSize: 11,
+    letterSpacing: "0.06em",
+    padding: "5px 10px",
+    cursor: "pointer",
+    display: "block",
+    whiteSpace: "nowrap",
+  });
+
+  return (
+    <div ref={ref} style={{ position: "relative", minWidth: 160 }}>
+      <button
+        onClick={() => setOpen((p) => !p)}
+        style={{
+          width: "100%",
+          background: t.legendBg,
+          border: `1px solid ${t.legendBorder}`,
+          borderRadius: 4,
+          color: t.labelAccent,
+          fontFamily: "monospace",
+          fontSize: 11,
+          letterSpacing: "0.08em",
+          padding: "5px 8px",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 6,
+          boxShadow: open ? `0 0 8px ${t.labelAccent}30` : "none",
+          transition: "box-shadow 0.15s",
+        }}
+      >
+        <span>{current ? `${current.code} ${current.name}` : "세계지도"}</span>
+        <span style={{ opacity: 0.6, fontSize: 9 }}>{open ? "▲" : "▼"}</span>
+      </button>
+
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            right: 0,
+            top: "calc(100% + 4px)",
+            background: "rgba(5, 10, 20, 0.97)",
+            border: `1px solid ${t.legendBorder}`,
+            borderRadius: 4,
+            zIndex: 50,
+            maxHeight: 220,
+            overflowY: "auto",
+            minWidth: "100%",
+            boxShadow: `0 4px 20px rgba(0,0,0,0.6), 0 0 12px ${t.labelAccent}20`,
+          }}
+        >
+          <button style={itemStyle(!value)} onClick={() => { onChange(""); setOpen(false); }}>
+            세계지도
+          </button>
+          <div style={{ height: 1, background: t.legendBorder, margin: "2px 0" }} />
+          {COUNTRIES.map((c) => (
+            <button
+              key={c.code}
+              style={itemStyle(value === c.code)}
+              onClick={() => { onChange(c.code); setOpen(false); }}
+            >
+              {c.code} {c.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface CyberMapProps {
   stores: MapStore[];
   isLoading?: boolean;
@@ -120,15 +222,30 @@ interface CyberMapProps {
 
 export function CyberMap({ stores, isLoading }: CyberMapProps) {
   const router = useRouter();
+  const mapRef = useRef<MapRef>(null);
   const { theme } = useTheme();
   const [tooltip, setTooltip] = useState<TooltipState>(null);
+  const [selectedCountry, setSelectedCountry] = useState("");
   const [viewState, setViewState] = useState({
-    longitude: 10,
-    latitude: 20,
-    zoom: 1,
+    longitude: WORLD_VIEW.longitude,
+    latitude: WORLD_VIEW.latitude,
+    zoom: WORLD_VIEW.zoom,
   });
 
   const t = MAP_THEMES[theme];
+
+  function handleCountryChange(code: string) {
+    setSelectedCountry(code);
+    if (!mapRef.current) return;
+    const view = code ? COUNTRY_VIEWS[code] : WORLD_VIEW;
+    mapRef.current.flyTo({
+      center: [view.longitude, view.latitude],
+      zoom: view.zoom,
+      duration: 2000,
+      curve: 1.5,
+      essential: true,
+    });
+  }
 
   return (
     <div
@@ -158,24 +275,32 @@ export function CyberMap({ stores, isLoading }: CyberMapProps) {
         </p>
       </div>
 
-      {/* 상단 오른쪽: 매장 수 카운터 */}
-      <div className="absolute top-4 right-5 z-10 text-right leading-tight">
-        <p
-          className="font-mono text-[10px] tracking-widest uppercase"
-          style={{ color: t.labelAccent, opacity: 0.6 }}
-        >
-          Active Stores
-        </p>
-        <p
-          className="font-mono text-2xl font-bold tabular-nums"
-          style={{ color: t.labelPrimary }}
-        >
-          {isLoading ? "--" : stores.length}
-        </p>
+      {/* 상단 오른쪽: 국가 콤보박스 + 매장 수 카운터 */}
+      <div className="absolute top-4 right-5 z-20 flex flex-col items-end gap-3">
+        <CyberCountrySelect
+          value={selectedCountry}
+          onChange={handleCountryChange}
+          t={t}
+        />
+        <div className="text-right leading-tight">
+          <p
+            className="font-mono text-[10px] tracking-widest uppercase"
+            style={{ color: t.labelAccent, opacity: 0.6 }}
+          >
+            Active Stores
+          </p>
+          <p
+            className="font-mono text-2xl font-bold tabular-nums"
+            style={{ color: t.labelPrimary }}
+          >
+            {isLoading ? "--" : stores.length}
+          </p>
+        </div>
       </div>
 
       {/* MapLibre GL 지도 */}
       <Map
+        ref={mapRef}
         {...viewState}
         onMove={(evt) => setViewState(evt.viewState)}
         mapStyle={t.mapStyle}
