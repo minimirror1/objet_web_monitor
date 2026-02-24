@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const links = [
   { href: "/", label: "대시보드" },
   { href: "/stores", label: "매장 관리" },
+  { href: "/comm-logs", label: "통신 로그" },
 ];
 
 interface SidebarNavProps {

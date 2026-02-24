@@ -14,7 +14,7 @@ import { SidebarNav } from "@/components/layout/sidebar";
 import { useAuth } from "@/providers/auth-provider";
 import { useTheme } from "@/providers/theme-provider";
 
-const ROOT_PATHS = ["/", "/stores"];
+const ROOT_PATHS = ["/", "/stores", "/comm-logs"];
 
 export function Header() {
   const { logout } = useAuth();
