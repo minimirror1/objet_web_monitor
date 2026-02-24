@@ -182,10 +182,11 @@ function CyberCountrySelect({
 
       {open && (
         <div
+          className="cyber-scrollbar"
           style={{
             position: "absolute",
-            right: 0,
-            top: "calc(100% + 4px)",
+            left: 0,
+            bottom: "calc(100% + 4px)",
             background: "rgba(5, 10, 20, 0.97)",
             border: `1px solid ${t.legendBorder}`,
             borderRadius: 4,
@@ -193,7 +194,7 @@ function CyberCountrySelect({
             maxHeight: 220,
             overflowY: "auto",
             minWidth: "100%",
-            boxShadow: `0 4px 20px rgba(0,0,0,0.6), 0 0 12px ${t.labelAccent}20`,
+            boxShadow: `0 -4px 20px rgba(0,0,0,0.6), 0 0 12px ${t.labelAccent}20`,
           }}
         >
           <button style={itemStyle(!value)} onClick={() => { onChange(""); setOpen(false); }}>
@@ -275,27 +276,20 @@ export function CyberMap({ stores, isLoading }: CyberMapProps) {
         </p>
       </div>
 
-      {/* 상단 오른쪽: 국가 콤보박스 + 매장 수 카운터 */}
-      <div className="absolute top-4 right-5 z-20 flex flex-col items-end gap-3">
-        <CyberCountrySelect
-          value={selectedCountry}
-          onChange={handleCountryChange}
-          t={t}
-        />
-        <div className="text-right leading-tight">
-          <p
-            className="font-mono text-[10px] tracking-widest uppercase"
-            style={{ color: t.labelAccent, opacity: 0.6 }}
-          >
-            Active Stores
-          </p>
-          <p
-            className="font-mono text-2xl font-bold tabular-nums"
-            style={{ color: t.labelPrimary }}
-          >
-            {isLoading ? "--" : stores.length}
-          </p>
-        </div>
+      {/* 상단 오른쪽: 매장 수 카운터 */}
+      <div className="absolute top-4 right-5 z-10 text-right leading-tight">
+        <p
+          className="font-mono text-[10px] tracking-widest uppercase"
+          style={{ color: t.labelAccent, opacity: 0.6 }}
+        >
+          Active Stores
+        </p>
+        <p
+          className="font-mono text-2xl font-bold tabular-nums"
+          style={{ color: t.labelPrimary }}
+        >
+          {isLoading ? "--" : stores.length}
+        </p>
       </div>
 
       {/* MapLibre GL 지도 */}
@@ -378,17 +372,24 @@ export function CyberMap({ stores, isLoading }: CyberMapProps) {
       {/* 호버 툴팁 */}
       {tooltip && <CyberTooltip tooltip={tooltip} />}
 
-      {/* 하단 레전드 */}
-      <div
-        className="absolute bottom-3 left-4 z-10 flex items-center gap-4 rounded px-3 py-1.5"
-        style={{
-          background: t.legendBg,
-          border: `1px solid ${t.legendBorder}`,
-        }}
-      >
-        <LegendItem color="#00ff88" label="정상" labelColor={t.legendLabel} />
-        <LegendItem color="#ff3366" label="에러" labelColor={t.legendLabel} />
-        <LegendItem color="#ffaa00" label="전원 OFF" labelColor={t.legendLabel} />
+      {/* 하단 왼쪽: 국가 콤보박스 + 레전드 */}
+      <div className="absolute bottom-3 left-4 z-20 flex items-center gap-3">
+        <CyberCountrySelect
+          value={selectedCountry}
+          onChange={handleCountryChange}
+          t={t}
+        />
+        <div
+          className="flex items-center gap-4 rounded px-3 py-1.5"
+          style={{
+            background: t.legendBg,
+            border: `1px solid ${t.legendBorder}`,
+          }}
+        >
+          <LegendItem color="#00ff88" label="정상" labelColor={t.legendLabel} />
+          <LegendItem color="#ff3366" label="에러" labelColor={t.legendLabel} />
+          <LegendItem color="#ffaa00" label="전원 OFF" labelColor={t.legendLabel} />
+        </div>
       </div>
 
       {/* 하단 우측: LIVE 라벨 */}
