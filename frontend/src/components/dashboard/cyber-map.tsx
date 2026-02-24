@@ -134,8 +134,8 @@ export function CyberMap({ stores, isLoading }: CyberMapProps) {
     <div
       className="relative w-full overflow-hidden"
       style={{
-        height: 480,
-        background: t.bg,
+        height: 600,
+        backgroundColor: t.bg,
         backgroundImage:
           `linear-gradient(${t.gridColor} 1px, transparent 1px), ` +
           `linear-gradient(90deg, ${t.gridColor} 1px, transparent 1px)`,

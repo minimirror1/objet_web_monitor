@@ -109,7 +109,15 @@ export function useDashboardData() {
 
   /* ── 지도용 매장 (상태 정보 포함) ── */
   const mapStores: MapStore[] = stores
-    .filter((s: Store) => s.latitude != null && s.longitude != null)
+    .filter(
+      (s: Store) =>
+        s.latitude != null &&
+        s.longitude != null &&
+        s.latitude >= -90 &&
+        s.latitude <= 90 &&
+        s.longitude >= -180 &&
+        s.longitude <= 180,
+    )
     .map((s: Store) => ({
       id: s.id,
       store_name: s.store_name,
