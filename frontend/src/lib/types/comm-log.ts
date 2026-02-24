@@ -24,4 +24,8 @@ export type CommLogEntry = {
   isError: boolean;
   /** 오류 메시지 (isError === true일 때만 존재) */
   errorMessage?: string;
+  /** 요청 본문 (POST/PUT/PATCH 등에서 전송한 데이터) */
+  requestBody?: unknown;
+  /** 응답 본문 (서버에서 받은 데이터) */
+  responseBody?: unknown;
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore, useState } from "react";
 import {
   subscribe,
   getSnapshot,
@@ -56,57 +56,114 @@ function formatDuration(ms: number): string {
   return `${ms}ms`;
 }
 
-function CommLogRow({ entry }: { entry: CommLogEntry }) {
+function JsonBlock({ label, data }: { label: string; data: unknown }) {
+  const isEmpty = data === undefined || data === null;
   return (
-    <TableRow
-      className={cn(entry.isError && "bg-red-50/50 dark:bg-red-950/20")}
-    >
-      <TableCell>
-        <Badge
-          variant="outline"
+    <div className="flex-1 min-w-0">
+      <p className="text-xs font-medium text-muted-foreground mb-1">{label}</p>
+      {isEmpty ? (
+        <p className="text-xs text-muted-foreground italic">(없음)</p>
+      ) : (
+        <pre className="text-xs bg-muted rounded p-2 overflow-auto max-h-48 whitespace-pre-wrap break-all">
+          {JSON.stringify(data, null, 2)}
+        </pre>
+      )}
+    </div>
+  );
+}
+
+function CommLogRow({
+  entry,
+  expanded,
+  onToggle,
+}: {
+  entry: CommLogEntry;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const hasBody = entry.requestBody !== undefined || entry.responseBody !== undefined;
+
+  return (
+    <>
+      <TableRow
+        className={cn(
+          "cursor-pointer select-none transition-colors",
+          entry.isError && "bg-red-50/50 dark:bg-red-950/20",
+          expanded && "bg-accent/50"
+        )}
+        onClick={onToggle}
+      >
+        <TableCell>
+          <Badge
+            variant="outline"
+            className={cn(
+              "font-mono text-xs border-0",
+              METHOD_STYLES[entry.method]
+            )}
+          >
+            {entry.method}
+          </Badge>
+        </TableCell>
+        <TableCell>
+          <Badge
+            variant="outline"
+            className={cn(
+              "font-mono text-xs border-0",
+              getStatusStyle(entry.status)
+            )}
+          >
+            {entry.status ?? "ERR"}
+          </Badge>
+        </TableCell>
+        <TableCell
+          className="font-mono text-xs text-foreground max-w-xs truncate"
+          title={entry.url}
+        >
+          {entry.url}
+        </TableCell>
+        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+          {formatTime(entry.timestamp)}
+        </TableCell>
+        <TableCell className="text-xs text-muted-foreground text-right whitespace-nowrap">
+          {formatDuration(entry.duration)}
+        </TableCell>
+        <TableCell
+          className="text-xs text-red-500 max-w-xs truncate"
+          title={entry.errorMessage}
+        >
+          {entry.errorMessage ?? ""}
+        </TableCell>
+        <TableCell className="w-6 text-center text-muted-foreground text-xs">
+          {hasBody ? (expanded ? "▲" : "▼") : ""}
+        </TableCell>
+      </TableRow>
+
+      {expanded && (
+        <TableRow
           className={cn(
-            "font-mono text-xs border-0",
-            METHOD_STYLES[entry.method]
+            "hover:bg-transparent",
+            entry.isError && "bg-red-50/30 dark:bg-red-950/10"
           )}
         >
-          {entry.method}
-        </Badge>
-      </TableCell>
-      <TableCell>
-        <Badge
-          variant="outline"
-          className={cn(
-            "font-mono text-xs border-0",
-            getStatusStyle(entry.status)
-          )}
-        >
-          {entry.status ?? "ERR"}
-        </Badge>
-      </TableCell>
-      <TableCell
-        className="font-mono text-xs text-foreground max-w-xs truncate"
-        title={entry.url}
-      >
-        {entry.url}
-      </TableCell>
-      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-        {formatTime(entry.timestamp)}
-      </TableCell>
-      <TableCell className="text-xs text-muted-foreground text-right whitespace-nowrap">
-        {formatDuration(entry.duration)}
-      </TableCell>
-      <TableCell
-        className="text-xs text-red-500 max-w-xs truncate"
-        title={entry.errorMessage}
-      >
-        {entry.errorMessage ?? ""}
-      </TableCell>
-    </TableRow>
+          <TableCell colSpan={7} className="py-3 px-4">
+            <div className="flex gap-4">
+              <JsonBlock label="요청 본문" data={entry.requestBody} />
+              <JsonBlock label="응답 본문" data={entry.responseBody} />
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   );
 }
 
 export default function CommLogsPage() {
   const logs = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  function handleToggle(id: string) {
+    setExpandedId((prev) => (prev === id ? null : id));
+  }
 
   return (
     <main className="p-6 space-y-4">
@@ -119,7 +176,10 @@ export default function CommLogsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={clearLogs}
+            onClick={() => {
+              clearLogs();
+              setExpandedId(null);
+            }}
             disabled={logs.length === 0}
           >
             초기화
@@ -142,11 +202,17 @@ export default function CommLogsPage() {
                 <TableHead className="w-24">시각</TableHead>
                 <TableHead className="w-24 text-right">응답시간</TableHead>
                 <TableHead>오류 메시지</TableHead>
+                <TableHead className="w-6" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {logs.map((entry) => (
-                <CommLogRow key={entry.id} entry={entry} />
+                <CommLogRow
+                  key={entry.id}
+                  entry={entry}
+                  expanded={expandedId === entry.id}
+                  onToggle={() => handleToggle(entry.id)}
+                />
               ))}
             </TableBody>
           </Table>

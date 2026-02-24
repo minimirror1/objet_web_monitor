@@ -44,6 +44,19 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// config.data(문자열 또는 객체)를 파싱하여 요청 본문 반환
+function parseRequestBody(data: unknown): unknown {
+  if (data === undefined || data === null) return undefined;
+  if (typeof data === "string") {
+    try {
+      return JSON.parse(data);
+    } catch {
+      return data;
+    }
+  }
+  return data;
+}
+
 // 응답 로그 기록
 apiClient.interceptors.response.use(
   (response) => {
@@ -58,6 +71,8 @@ apiClient.interceptors.response.use(
       status: response.status,
       duration,
       isError: response.status >= 400,
+      requestBody: parseRequestBody(response.config.data),
+      responseBody: response.data,
     });
 
     return response;
@@ -79,6 +94,8 @@ apiClient.interceptors.response.use(
       duration,
       isError: true,
       errorMessage,
+      requestBody: parseRequestBody(config?.data),
+      responseBody: error.response?.data,
     });
 
     throw error;
