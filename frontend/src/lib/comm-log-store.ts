@@ -21,13 +21,21 @@ export function getServerSnapshot(): CommLogEntry[] {
   return [];
 }
 
+/** crypto.randomUUID()는 Secure Context(HTTPS/localhost)에서만 동작하므로 폴백 제공 */
+function generateId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
 /** 로그 추가. 최신 순 prepend, MAX_LOGS 초과 시 오래된 항목 제거 (FIFO) */
 export function addLog(entry: Omit<CommLogEntry, "id">): void {
   if (typeof window === "undefined") return;
 
   const newEntry: CommLogEntry = {
     ...entry,
-    id: crypto.randomUUID(),
+    id: generateId(),
   };
 
   logs = [newEntry, ...logs];
