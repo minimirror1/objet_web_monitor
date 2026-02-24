@@ -148,3 +148,14 @@
   transform-origin: center;
   animation: cyber-pulse 2s ease-out infinite;
 }
+
+/* ── CyberMap HTML 마커용 펄스 애니메이션 (MapLibre) ── */
+@keyframes cyber-pulse-html {
+  0%   { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+  70%  { opacity: 0;   transform: translate(-50%, -50%) scale(3.5); }
+  100% { opacity: 0;   transform: translate(-50%, -50%) scale(3.5); }
+}
+
+.cyber-pulse-html {
+  animation: cyber-pulse-html 2s ease-out infinite;
+}

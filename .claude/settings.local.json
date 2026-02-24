@@ -15,7 +15,8 @@
       "Bash(git commit:*)",
       "Bash(git remote add:*)",
       "Bash(git push:*)",
-      "Bash(tail:*)"
+      "Bash(tail:*)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }

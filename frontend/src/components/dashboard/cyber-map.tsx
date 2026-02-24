@@ -1,51 +1,36 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ComposableMap,
-  Geographies,
-  Geography,
-  Marker,
-  ZoomableGroup,
-} from "react-simple-maps";
+import Map, { Marker as MapMarker } from "react-map-gl/maplibre";
+import "maplibre-gl/dist/maplibre-gl.css";
 import type { MapStore } from "@/lib/types/map-store";
 import { useTheme } from "@/providers/theme-provider";
 
-const GEO_110M = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
-const GEO_50M  = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
-
-/** 줌 4 이상이면 세밀한 50m 데이터 사용 */
-const DETAIL_ZOOM_THRESHOLD = 4;
-
 const MAP_THEMES = {
   dark: {
-    bg:            "#050a14",
-    gridColor:     "rgba(0,212,255,0.03)",
-    countryFill:   "#0d1929",
-    countryStroke: "#1e4976",
-    countryHover:  "#122035",
-    labelPrimary:  "#e0f0ff",
-    labelAccent:   "#00d4ff",
-    legendBg:      "rgba(5,10,20,0.7)",
-    legendBorder:  "rgba(0,212,255,0.15)",
-    legendLabel:   "#8ab4d4",
-    liveColor:     "#00d4ff",
-    fadeColor:     "#050a14",
+    bg:           "#050a14",
+    gridColor:    "rgba(0,212,255,0.03)",
+    labelPrimary: "#e0f0ff",
+    labelAccent:  "#00d4ff",
+    legendBg:     "rgba(5,10,20,0.7)",
+    legendBorder: "rgba(0,212,255,0.15)",
+    legendLabel:  "#8ab4d4",
+    liveColor:    "#00d4ff",
+    fadeColor:    "#050a14",
+    mapStyle:     "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
   },
   light: {
-    bg:            "#e8f2fb",
-    gridColor:     "rgba(0,100,200,0.05)",
-    countryFill:   "#c4ddf0",
-    countryStroke: "#5b9bd5",
-    countryHover:  "#b0cfe8",
-    labelPrimary:  "#0d2a4a",
-    labelAccent:   "#1a6eb5",
-    legendBg:      "rgba(220,238,255,0.85)",
-    legendBorder:  "rgba(0,100,200,0.2)",
-    legendLabel:   "#1a4a7a",
-    liveColor:     "#1a6eb5",
-    fadeColor:     "#e8f2fb",
+    bg:           "#e8f2fb",
+    gridColor:    "rgba(0,100,200,0.05)",
+    labelPrimary: "#0d2a4a",
+    labelAccent:  "#1a6eb5",
+    legendBg:     "rgba(220,238,255,0.85)",
+    legendBorder: "rgba(0,100,200,0.2)",
+    legendLabel:  "#1a4a7a",
+    liveColor:    "#1a6eb5",
+    fadeColor:    "#e8f2fb",
+    mapStyle:     "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
   },
 } as const;
 
@@ -137,22 +122,13 @@ export function CyberMap({ stores, isLoading }: CyberMapProps) {
   const router = useRouter();
   const { theme } = useTheme();
   const [tooltip, setTooltip] = useState<TooltipState>(null);
-  const [zoom, setZoom] = useState(1.2);
-  const [center, setCenter] = useState<[number, number]>([10, 10]);
-
-  // 50m 데이터 미리 prefetch → 줌 전환 시 깜빡임 최소화
-  useEffect(() => {
-    fetch(GEO_50M);
-  }, []);
+  const [viewState, setViewState] = useState({
+    longitude: 10,
+    latitude: 20,
+    zoom: 2,
+  });
 
   const t = MAP_THEMES[theme];
-  const geoUrl = zoom >= DETAIL_ZOOM_THRESHOLD ? GEO_50M : GEO_110M;
-
-  // ZoomableGroup이 scale(zoom) 변환을 적용하므로
-  // SVG r을 zoom으로 나누면 화면상 픽셀 크기가 일정하게 유지됨
-  const coreR  = 5  / zoom;
-  const pulseR = 10 / zoom;
-  const hitR   = 14 / zoom;
 
   return (
     <div
@@ -198,88 +174,81 @@ export function CyberMap({ stores, isLoading }: CyberMapProps) {
         </p>
       </div>
 
-      {/* SVG 세계지도 */}
-      <ComposableMap
-        projection="geoEquirectangular"
+      {/* MapLibre GL 지도 */}
+      <Map
+        {...viewState}
+        onMove={(evt) => setViewState(evt.viewState)}
+        mapStyle={t.mapStyle}
         style={{ width: "100%", height: "100%" }}
+        minZoom={1}
+        maxZoom={22}
+        attributionControl={false}
       >
-        <ZoomableGroup
-          zoom={zoom}
-          center={center}
-          maxZoom={20}
-          minZoom={0.5}
-          onMoveEnd={({ zoom: z, coordinates }) => {
-            setZoom(z);
-            setCenter(coordinates as [number, number]);
-          }}
-        >
-          <Geographies geography={geoUrl}>
-            {({ geographies }) =>
-              geographies.map((geo) => (
-                <Geography
-                  key={geo.rsmKey}
-                  geography={geo}
-                  style={{
-                    default: {
-                      fill: t.countryFill,
-                      stroke: t.countryStroke,
-                      strokeWidth: 0.5,
-                      outline: "none",
-                    },
-                    hover: {
-                      fill: t.countryHover,
-                      stroke: t.countryStroke,
-                      strokeWidth: 0.5,
-                      outline: "none",
-                    },
-                    pressed: { outline: "none" },
-                  }}
-                />
-              ))
-            }
-          </Geographies>
-
-          {!isLoading &&
-            stores.map((store) => {
-              const color = getMarkerColor(store);
-              return (
-                <Marker
-                  key={store.id}
-                  coordinates={[store.longitude, store.latitude]}
+        {!isLoading &&
+          stores.map((store) => {
+            const color = getMarkerColor(store);
+            return (
+              <MapMarker
+                key={store.id}
+                longitude={store.longitude}
+                latitude={store.latitude}
+                anchor="center"
+                onClick={() => router.push(`/stores/${store.id}`)}
+              >
+                <div
+                  className="relative"
+                  style={{ width: 20, height: 20, cursor: "pointer" }}
+                  onMouseEnter={(e) =>
+                    setTooltip({ store, x: e.clientX, y: e.clientY })
+                  }
+                  onMouseMove={(e) =>
+                    setTooltip({ store, x: e.clientX, y: e.clientY })
+                  }
+                  onMouseLeave={() => setTooltip(null)}
                 >
-                  {/* 펄스 링 */}
-                  <circle
-                    r={pulseR}
-                    fill={color}
-                    fillOpacity={0.18}
-                    className="cyber-pulse"
-                  />
-                  {/* 코어 점 */}
-                  <circle r={coreR} fill={color} opacity={0.9} />
-                  {/* 내부 하이라이트 */}
-                  <circle r={coreR * 0.35} fill="#ffffff" opacity={0.7} />
-                  {/* 히트 영역 */}
-                  <circle
-                    r={hitR}
-                    fill="transparent"
-                    style={{ cursor: "pointer" }}
-                    onMouseEnter={(e) =>
-                      setTooltip({ store, x: e.clientX, y: e.clientY })
-                    }
-                    onMouseMove={(e) =>
-                      setTooltip({ store, x: e.clientX, y: e.clientY })
-                    }
-                    onMouseLeave={() => setTooltip(null)}
-                    onClick={() => {
-                      setTooltip(null);
-                      router.push(`/stores/${store.id}`);
+                  {/* 펄스 링 (HTML) */}
+                  <div
+                    className="cyber-pulse-html absolute rounded-full"
+                    style={{
+                      width: 20,
+                      height: 20,
+                      left: "50%",
+                      top: "50%",
+                      background: color,
+                      opacity: 0.2,
                     }}
                   />
-                </Marker>
-              );
-            })}
-        </ZoomableGroup>
-      </ComposableMap>
+                  {/* 코어 점 */}
+                  <div
+                    className="absolute rounded-full"
+                    style={{
+                      width: 10,
+                      height: 10,
+                      left: "50%",
+                      top: "50%",
+                      transform: "translate(-50%, -50%)",
+                      background: color,
+                      boxShadow: `0 0 8px ${color}`,
+                    }}
+                  />
+                  {/* 내부 하이라이트 */}
+                  <div
+                    className="absolute rounded-full"
+                    style={{
+                      width: 4,
+                      height: 4,
+                      left: "50%",
+                      top: "50%",
+                      transform: "translate(-50%, -50%)",
+                      background: "#fff",
+                      opacity: 0.7,
+                    }}
+                  />
+                </div>
+              </MapMarker>
+            );
+          })}
+      </Map>
 
       {/* 호버 툴팁 */}
       {tooltip && <CyberTooltip tooltip={tooltip} />}
@@ -307,7 +276,7 @@ export function CyberMap({ stores, isLoading }: CyberMapProps) {
 
       {/* 스캔라인 오버레이 */}
       <div
-        className="pointer-events-none absolute inset-0"
+        className="pointer-events-none absolute inset-0 z-10"
         style={{
           background:
             "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px)",
@@ -316,13 +285,13 @@ export function CyberMap({ stores, isLoading }: CyberMapProps) {
 
       {/* 상하단 그라디언트 페이드 */}
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-12"
+        className="pointer-events-none absolute inset-x-0 top-0 z-10 h-12"
         style={{
           background: `linear-gradient(to bottom, ${t.fadeColor} 0%, transparent 100%)`,
         }}
       />
       <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-12"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-12"
         style={{
           background: `linear-gradient(to top, ${t.fadeColor} 0%, transparent 100%)`,
         }}
