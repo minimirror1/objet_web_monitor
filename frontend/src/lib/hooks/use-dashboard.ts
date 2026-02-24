@@ -4,6 +4,7 @@ import { useQueries } from "@tanstack/react-query";
 import { getStoreDetail } from "@/lib/api/stores";
 import { useAllStores } from "@/lib/hooks/use-stores";
 import type { Store } from "@/lib/types/store";
+import type { MapStore } from "@/lib/types/map-store";
 
 export type PowerChartDatum = { name: string; value: number; fill: string };
 export type OpStatusChartDatum = { name: string; value: number; fill: string };
@@ -58,7 +59,12 @@ export function useDashboardData() {
   const opCounts: Record<string, number> = { PLAY: 0, STOP: 0, REPEAT: 0 };
   const alerts: AlertRow[] = [];
 
+  const storeStatusMap = new Map<string, { hasError: boolean; hasPowerOff: boolean }>();
+
   storeDetails.forEach((s) => {
+    let hasError = false;
+    let hasPowerOff = false;
+
     s.pcs.forEach((pc) => {
       pc.objects.forEach((obj) => {
         const errCount = obj.error_data?.length ?? 0;
@@ -70,6 +76,9 @@ export function useDashboardData() {
         if (obj.operation_status && obj.operation_status in opCounts) {
           opCounts[obj.operation_status]++;
         }
+
+        if (errCount > 0) hasError = true;
+        if (obj.power_status === "OFF") hasPowerOff = true;
 
         if (errCount > 0 || obj.power_status === "OFF") {
           alerts.push({
@@ -84,6 +93,8 @@ export function useDashboardData() {
         }
       });
     });
+
+    storeStatusMap.set(s.store_id, { hasError, hasPowerOff });
   });
 
   /* ── 차트 데이터 ── */
@@ -96,10 +107,17 @@ export function useDashboardData() {
     ([name, value]) => ({ name, value, fill: OP_FILL[name] ?? "#94a3b8" })
   );
 
-  /* ── 지도용 매장 ── */
-  const mapStores = stores.filter(
-    (s: Store) => s.latitude != null && s.longitude != null
-  );
+  /* ── 지도용 매장 (상태 정보 포함) ── */
+  const mapStores: MapStore[] = stores
+    .filter((s: Store) => s.latitude != null && s.longitude != null)
+    .map((s: Store) => ({
+      id: s.id,
+      store_name: s.store_name,
+      latitude: s.latitude!,
+      longitude: s.longitude!,
+      address: s.address,
+      ...(storeStatusMap.get(s.id) ?? { hasError: false, hasPowerOff: false }),
+    }));
 
   return {
     isLoading,
