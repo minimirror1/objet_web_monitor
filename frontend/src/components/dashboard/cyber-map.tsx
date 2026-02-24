@@ -125,7 +125,7 @@ export function CyberMap({ stores, isLoading }: CyberMapProps) {
   const [viewState, setViewState] = useState({
     longitude: 10,
     latitude: 20,
-    zoom: 2,
+    zoom: 1,
   });
 
   const t = MAP_THEMES[theme];
