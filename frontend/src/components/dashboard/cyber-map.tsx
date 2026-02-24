@@ -261,7 +261,7 @@ export function CyberMap({ stores, isLoading }: CyberMapProps) {
       }}
     >
       {/* 상단 왼쪽: 제목 오버레이 */}
-      <div className="absolute top-4 left-5 z-10 leading-tight">
+      <div className="absolute top-10 left-10 z-10 leading-tight">
         <p
           className="font-mono text-[10px] tracking-[0.3em] uppercase"
           style={{ color: t.labelAccent, opacity: 0.6 }}
@@ -277,7 +277,7 @@ export function CyberMap({ stores, isLoading }: CyberMapProps) {
       </div>
 
       {/* 상단 오른쪽: 매장 수 카운터 */}
-      <div className="absolute top-4 right-5 z-10 text-right leading-tight">
+      <div className="absolute top-10 right-10 z-10 text-right leading-tight">
         <p
           className="font-mono text-[10px] tracking-widest uppercase"
           style={{ color: t.labelAccent, opacity: 0.6 }}
