@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ComposableMap,
@@ -12,8 +12,11 @@ import {
 import type { MapStore } from "@/lib/types/map-store";
 import { useTheme } from "@/providers/theme-provider";
 
-const GEO_URL =
-  "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+const GEO_110M = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+const GEO_50M  = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
+
+/** 줌 4 이상이면 세밀한 50m 데이터 사용 */
+const DETAIL_ZOOM_THRESHOLD = 4;
 
 const MAP_THEMES = {
   dark: {
@@ -134,8 +137,22 @@ export function CyberMap({ stores, isLoading }: CyberMapProps) {
   const router = useRouter();
   const { theme } = useTheme();
   const [tooltip, setTooltip] = useState<TooltipState>(null);
+  const [zoom, setZoom] = useState(1.2);
+  const [center, setCenter] = useState<[number, number]>([10, 10]);
+
+  // 50m 데이터 미리 prefetch → 줌 전환 시 깜빡임 최소화
+  useEffect(() => {
+    fetch(GEO_50M);
+  }, []);
 
   const t = MAP_THEMES[theme];
+  const geoUrl = zoom >= DETAIL_ZOOM_THRESHOLD ? GEO_50M : GEO_110M;
+
+  // ZoomableGroup이 scale(zoom) 변환을 적용하므로
+  // SVG r을 zoom으로 나누면 화면상 픽셀 크기가 일정하게 유지됨
+  const coreR  = 5  / zoom;
+  const pulseR = 10 / zoom;
+  const hitR   = 14 / zoom;
 
   return (
     <div
@@ -186,8 +203,17 @@ export function CyberMap({ stores, isLoading }: CyberMapProps) {
         projection="geoEquirectangular"
         style={{ width: "100%", height: "100%" }}
       >
-        <ZoomableGroup zoom={1.2} center={[10, 10]}>
-          <Geographies geography={GEO_URL}>
+        <ZoomableGroup
+          zoom={zoom}
+          center={center}
+          maxZoom={20}
+          minZoom={0.5}
+          onMoveEnd={({ zoom: z, coordinates }) => {
+            setZoom(z);
+            setCenter(coordinates as [number, number]);
+          }}
+        >
+          <Geographies geography={geoUrl}>
             {({ geographies }) =>
               geographies.map((geo) => (
                 <Geography
@@ -223,18 +249,18 @@ export function CyberMap({ stores, isLoading }: CyberMapProps) {
                 >
                   {/* 펄스 링 */}
                   <circle
-                    r={8}
+                    r={pulseR}
                     fill={color}
                     fillOpacity={0.18}
                     className="cyber-pulse"
                   />
                   {/* 코어 점 */}
-                  <circle r={4} fill={color} opacity={0.9} />
+                  <circle r={coreR} fill={color} opacity={0.9} />
                   {/* 내부 하이라이트 */}
-                  <circle r={1.5} fill="#ffffff" opacity={0.7} />
+                  <circle r={coreR * 0.35} fill="#ffffff" opacity={0.7} />
                   {/* 히트 영역 */}
                   <circle
-                    r={12}
+                    r={hitR}
                     fill="transparent"
                     style={{ cursor: "pointer" }}
                     onMouseEnter={(e) =>
