@@ -73,9 +73,3 @@ export type StoreUpdateRequest = {
   operate_times?: StoreOperateTime[];
 };
 
-export type StoreEventType = "ON" | "OFF" | "REBOOT";
-
-export type StoreEventSendRequest = {
-  store_id: string;
-  event_type: StoreEventType;
-};

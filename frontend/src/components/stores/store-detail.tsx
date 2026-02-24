@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { StoreEventPanel } from "@/components/stores/store-event-panel";
 import type { StoreDetail } from "@/lib/types/store";
 import { formatDateTime } from "@/lib/utils/format";
 
@@ -165,9 +164,6 @@ export function StoreDetailView({ store, onDelete, isDeleting }: StoreDetailView
           )}
         </CardContent>
       </Card>
-
-      {/* 이벤트 전송 */}
-      <StoreEventPanel storeId={store.store_id} />
 
       {/* 삭제 버튼 */}
       <div className="flex justify-end pt-2">

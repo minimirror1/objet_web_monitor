@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api/client";
-import type { Store, StoreCreateRequest, StoreDetail, StoreEventSendRequest, StoreUpdateRequest } from "@/lib/types/store";
+import type { Store, StoreCreateRequest, StoreDetail, StoreUpdateRequest } from "@/lib/types/store";
 
 export async function getStores(countryCode?: string) {
   const response = await apiClient.get<{ stores: Store[] }>("/v1/service/stores", {
@@ -30,10 +30,5 @@ export async function updateStore(storeId: string, payload: StoreUpdateRequest) 
 
 export async function deleteStore(storeId: string) {
   const response = await apiClient.delete(`/v1/service/stores/${storeId}`);
-  return response.data;
-}
-
-export async function sendStoreEvent(payload: StoreEventSendRequest) {
-  const response = await apiClient.post("/v1/service/stores/send-event", payload);
   return response.data;
 }

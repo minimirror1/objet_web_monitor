@@ -1,8 +1,8 @@
 "use client";
 
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createStore, deleteStore, getStore, getStoreDetail, getStores, sendStoreEvent, updateStore } from "@/lib/api/stores";
-import type { Store, StoreCreateRequest, StoreEventSendRequest, StoreUpdateRequest } from "@/lib/types/store";
+import { createStore, deleteStore, getStore, getStoreDetail, getStores, updateStore } from "@/lib/api/stores";
+import type { Store, StoreCreateRequest, StoreUpdateRequest } from "@/lib/types/store";
 import { COUNTRY_CODES } from "@/lib/utils/constants";
 
 /** 단일 국가코드 조회 */
@@ -76,11 +76,5 @@ export function useDeleteStore() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["stores"] });
     },
-  });
-}
-
-export function useSendStoreEvent() {
-  return useMutation({
-    mutationFn: (payload: StoreEventSendRequest) => sendStoreEvent(payload),
   });
 }
