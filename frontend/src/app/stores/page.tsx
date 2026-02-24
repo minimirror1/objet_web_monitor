@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,8 +14,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { StoreTable } from "@/components/stores/store-table";
 import { useAllStores, useStores } from "@/lib/hooks/use-stores";
-import { useCountryCodes } from "@/lib/hooks/use-country-codes";
-import { CountryCodeSettingsDialog } from "@/components/stores/country-code-settings-dialog";
+import ReactCountryFlag from "react-country-flag";
+import { COUNTRIES } from "@/lib/utils/constants";
 import type { Store } from "@/lib/types/store";
 
 function StoreListByCountry({
@@ -97,40 +96,29 @@ function StoreListContent({
 export default function StoresPage() {
   const [countryCode, setCountryCode] = useState<string>("all");
   const [search, setSearch] = useState("");
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const { allCodes } = useCountryCodes();
 
   return (
     <main className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">매장 관리</h1>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSettingsOpen(true)}
-            title="국가 코드 설정"
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
-          <Button asChild>
-            <Link href="/stores/new">+ 매장 등록</Link>
-          </Button>
-        </div>
+        <Button asChild>
+          <Link href="/stores/new">+ 매장 등록</Link>
+        </Button>
       </div>
-
-      <CountryCodeSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <Select value={countryCode} onValueChange={setCountryCode}>
-          <SelectTrigger className="w-full sm:w-40">
+          <SelectTrigger className="w-full sm:w-52">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">전체</SelectItem>
-            {allCodes.map((code) => (
-              <SelectItem key={code} value={code}>
-                {code}
+            {COUNTRIES.map((country) => (
+              <SelectItem key={country.code} value={country.code}>
+                <span className="flex items-center gap-1.5">
+                  <ReactCountryFlag countryCode={country.code} svg style={{ width: "1.2em", height: "0.9em" }} />
+                  {country.code} {country.name}
+                </span>
               </SelectItem>
             ))}
           </SelectContent>

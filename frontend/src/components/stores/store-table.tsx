@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { formatDateTime } from "@/lib/utils/format";
+import ReactCountryFlag from "react-country-flag";
+import { COUNTRIES } from "@/lib/utils/constants";
 import type { Store } from "@/lib/types/store";
 
 interface StoreTableProps {
@@ -42,7 +44,17 @@ export function StoreTable({ stores }: StoreTableProps) {
             >
               <TableCell className="font-medium">{store.store_name}</TableCell>
               <TableCell>
-                <Badge variant="outline">{store.country_code}</Badge>
+                {(() => {
+                  const country = COUNTRIES.find((c) => c.code === store.country_code);
+                  return (
+                    <Badge variant="outline" className="gap-1.5">
+                      {country && (
+                        <ReactCountryFlag countryCode={country.code} svg style={{ width: "1.1em", height: "0.85em" }} />
+                      )}
+                      {country ? `${country.code} ${country.name}` : store.country_code}
+                    </Badge>
+                  );
+                })()}
               </TableCell>
               <TableCell className="text-muted-foreground max-w-xs truncate">{store.address ?? "-"}</TableCell>
               <TableCell className="text-muted-foreground">{store.timezone ?? "-"}</TableCell>

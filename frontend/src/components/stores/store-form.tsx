@@ -10,19 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { OperateTimeFields } from "@/components/stores/operate-time-fields";
-import { useCountryCodes } from "@/lib/hooks/use-country-codes";
+import ReactCountryFlag from "react-country-flag";
+import { COUNTRIES } from "@/lib/utils/constants";
 import { DAYS_OF_WEEK } from "@/lib/types/store";
 import type { StoreDetail } from "@/lib/types/store";
-
-const TIMEZONES = [
-  "Asia/Seoul",
-  "Asia/Tokyo",
-  "Asia/Shanghai",
-  "America/New_York",
-  "America/Los_Angeles",
-  "Europe/London",
-  "Europe/Paris",
-];
 
 const operateTimeSchema = z.object({
   day_of_week: z.enum(["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]),
@@ -58,13 +49,13 @@ interface StoreFormProps {
 
 export function StoreForm({ defaultValues, onSubmit, isLoading }: StoreFormProps) {
   const router = useRouter();
-  const { allCodes } = useCountryCodes();
 
   const {
     register,
     handleSubmit,
     control,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<StoreFormValues>({
     resolver: zodResolver(storeSchema) as never,
@@ -92,6 +83,8 @@ export function StoreForm({ defaultValues, onSubmit, isLoading }: StoreFormProps
         },
   });
 
+  const watchedTimezone = watch("timezone");
+
   async function onFormSubmit(values: StoreFormValues) {
     try {
       await onSubmit(values);
@@ -113,15 +106,22 @@ export function StoreForm({ defaultValues, onSubmit, isLoading }: StoreFormProps
           <Label>국가 *</Label>
           <Select
             defaultValue={defaultValues?.country_code}
-            onValueChange={(v) => setValue("country_code", v)}
+            onValueChange={(v) => {
+              setValue("country_code", v);
+              const found = COUNTRIES.find((c) => c.code === v);
+              if (found) setValue("timezone", found.timezone);
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="국가 선택" />
             </SelectTrigger>
             <SelectContent>
-              {allCodes.map((code) => (
-                <SelectItem key={code} value={code}>
-                  {code}
+              {COUNTRIES.map((country) => (
+                <SelectItem key={country.code} value={country.code}>
+                  <span className="flex items-center gap-1.5">
+                    <ReactCountryFlag countryCode={country.code} svg style={{ width: "1.2em", height: "0.9em" }} />
+                    {country.code} {country.name}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -162,16 +162,19 @@ export function StoreForm({ defaultValues, onSubmit, isLoading }: StoreFormProps
       <div className="space-y-1.5">
         <Label>타임존 *</Label>
         <Select
-          defaultValue={defaultValues?.timezone ?? "Asia/Seoul"}
+          value={watchedTimezone}
           onValueChange={(v) => setValue("timezone", v)}
         >
           <SelectTrigger>
             <SelectValue placeholder="타임존 선택" />
           </SelectTrigger>
           <SelectContent>
-            {TIMEZONES.map((tz) => (
-              <SelectItem key={tz} value={tz}>
-                {tz}
+            {COUNTRIES.map((country) => (
+              <SelectItem key={country.timezone} value={country.timezone}>
+                <span className="flex items-center gap-1.5">
+                  <ReactCountryFlag countryCode={country.code} svg style={{ width: "1.2em", height: "0.9em" }} />
+                  {country.timezone}
+                </span>
               </SelectItem>
             ))}
           </SelectContent>

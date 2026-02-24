@@ -4,6 +4,8 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import ReactCountryFlag from "react-country-flag";
+import { COUNTRIES } from "@/lib/utils/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { StoreDetail } from "@/lib/types/store";
@@ -48,7 +50,17 @@ export function StoreDetailView({ store, onDelete, isDeleting }: StoreDetailView
               <div>
                 <dt className="text-muted-foreground">국가</dt>
                 <dd className="mt-0.5">
-                  <Badge variant="outline">{store.country_code}</Badge>
+                  {(() => {
+                    const country = COUNTRIES.find((c) => c.code === store.country_code);
+                    return (
+                      <Badge variant="outline" className="gap-1.5">
+                        {country && (
+                          <ReactCountryFlag countryCode={country.code} svg style={{ width: "1.1em", height: "0.85em" }} />
+                        )}
+                        {country ? `${country.code} ${country.name}` : store.country_code}
+                      </Badge>
+                    );
+                  })()}
                 </dd>
               </div>
               <div className="col-span-2">
