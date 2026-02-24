@@ -37,7 +37,7 @@ export function Header() {
           </SheetTrigger>
           <SheetContent side="left" className="w-56 p-4">
             <SheetTitle className="text-sm font-semibold mb-4 text-foreground">
-              Robot Monitoring
+              Global Monitoring
             </SheetTitle>
             <SidebarNav onNavigate={() => setOpen(false)} />
           </SheetContent>
