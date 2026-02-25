@@ -141,7 +141,7 @@ function CyberCountrySelect({
   const itemStyle = (isSelected: boolean): React.CSSProperties => ({
     width: "100%",
     textAlign: "left",
-    background: isSelected ? "rgba(0,212,255,0.1)" : "transparent",
+    background: isSelected ? `${t.labelAccent}1a` : "transparent",
     border: "none",
     color: isSelected ? t.labelAccent : t.legendLabel,
     fontFamily: "monospace",
@@ -187,14 +187,15 @@ function CyberCountrySelect({
             position: "absolute",
             left: 0,
             bottom: "calc(100% + 4px)",
-            background: "rgba(5, 10, 20, 0.97)",
+            background: t.legendBg,
+            backdropFilter: "blur(8px)",
             border: `1px solid ${t.legendBorder}`,
             borderRadius: 4,
             zIndex: 50,
             maxHeight: 220,
             overflowY: "auto",
             minWidth: "100%",
-            boxShadow: `0 -4px 20px rgba(0,0,0,0.6), 0 0 12px ${t.labelAccent}20`,
+            boxShadow: `0 -4px 20px ${t.labelAccent}20, 0 0 12px ${t.labelAccent}15`,
           }}
         >
           <button style={itemStyle(!value)} onClick={() => { onChange(""); setOpen(false); }}>

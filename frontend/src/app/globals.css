@@ -160,22 +160,36 @@
   animation: cyber-pulse-html 2s ease-out infinite;
 }
 
-/* ── CyberMap 드롭다운 스크롤바 ── */
+/* ── CyberMap 드롭다운 스크롤바 (라이트 모드 기본) ── */
 .cyber-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 212, 255, 0.35) #050a14;
+  scrollbar-color: rgba(26, 110, 181, 0.4) rgba(220, 238, 255, 0.9);
 }
 .cyber-scrollbar::-webkit-scrollbar {
   width: 5px;
 }
 .cyber-scrollbar::-webkit-scrollbar-track {
-  background: #050a14;
+  background: rgba(220, 238, 255, 0.9);
   border-radius: 0 4px 4px 0;
 }
 .cyber-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(0, 212, 255, 0.35);
+  background: rgba(26, 110, 181, 0.4);
   border-radius: 3px;
 }
 .cyber-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(26, 110, 181, 0.75);
+}
+
+/* ── CyberMap 드롭다운 스크롤바 (다크 모드) ── */
+.dark .cyber-scrollbar {
+  scrollbar-color: rgba(0, 212, 255, 0.35) #050a14;
+}
+.dark .cyber-scrollbar::-webkit-scrollbar-track {
+  background: #050a14;
+}
+.dark .cyber-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.35);
+}
+.dark .cyber-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 212, 255, 0.65);
 }
