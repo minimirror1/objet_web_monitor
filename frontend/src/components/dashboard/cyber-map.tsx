@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { Play, Pause } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Map, { Marker as MapMarker } from "react-map-gl/maplibre";
 import type { MapRef } from "react-map-gl/maplibre";
@@ -252,6 +253,36 @@ export function CyberMap({ stores, isLoading }: CyberMapProps) {
   });
 
   const t = MAP_THEMES[theme];
+  const [isPlaying, setIsPlaying] = useState(false);
+  const currentIdxRef = useRef(-1);
+  const countryKeys = Object.keys(COUNTRY_VIEWS);
+
+  // 수동 선택 시 순회 인덱스 동기화
+  useEffect(() => {
+    currentIdxRef.current = countryKeys.indexOf(selectedCountry);
+  }, [selectedCountry]);
+
+  // 자동 순회 인터벌
+  useEffect(() => {
+    if (!isPlaying) return;
+    const id = setInterval(() => {
+      const nextIdx = currentIdxRef.current === -1
+        ? 0
+        : (currentIdxRef.current + 1) % countryKeys.length;
+      currentIdxRef.current = nextIdx;
+      const code = countryKeys[nextIdx];
+      setSelectedCountry(code);
+      const view = COUNTRY_VIEWS[code];
+      mapRef.current?.flyTo({
+        center: [view.longitude, view.latitude],
+        zoom: view.zoom,
+        duration: 2000,
+        curve: 1.5,
+        essential: true,
+      });
+    }, 5000);
+    return () => clearInterval(id);
+  }, [isPlaying]);
 
   function handleCountryChange(code: string) {
     setSelectedCountry(code);
@@ -392,6 +423,28 @@ export function CyberMap({ stores, isLoading }: CyberMapProps) {
 
       {/* 하단 왼쪽: 국가 콤보박스 + 레전드 */}
       <div className="absolute bottom-3 left-4 z-20 flex items-center gap-3">
+        {/* 자동 순회 재생/일시정지 버튼 */}
+        <button
+          onClick={() => setIsPlaying((p) => !p)}
+          title={isPlaying ? "순회 정지" : "국가 자동 순회"}
+          style={{
+            width: 28,
+            height: 28,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: isPlaying ? `${t.labelAccent}20` : t.legendBg,
+            border: `1px solid ${isPlaying ? t.labelAccent : t.legendBorder}`,
+            borderRadius: 4,
+            color: t.labelAccent,
+            cursor: "pointer",
+            boxShadow: isPlaying ? `0 0 10px ${t.labelAccent}40` : "none",
+            transition: "all 0.15s",
+            flexShrink: 0,
+          }}
+        >
+          {isPlaying ? <Pause size={12} /> : <Play size={12} />}
+        </button>
         <CyberCountrySelect
           value={selectedCountry}
           onChange={handleCountryChange}

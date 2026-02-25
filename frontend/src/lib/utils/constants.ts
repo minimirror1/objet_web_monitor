@@ -27,10 +27,10 @@ export const WORLD_VIEW = { longitude: 10, latitude: 20, zoom: 1 };
 export const COUNTRY_VIEWS: Record<string, { longitude: number; latitude: number; zoom: number }> = {
   KR:       { longitude: 127.5,   latitude:  36.5,  zoom:  6 },
   "KR-SEOUL": { longitude: 126.978, latitude:  37.566, zoom: 10 },
-  CN: { longitude: 104.0, latitude:  35.0, zoom:  3 },
+  CN: { longitude: 104.0, latitude:  35.0, zoom:  3.5 },
   JP: { longitude: 138.0, latitude:  36.0, zoom:  5 },
   TW: { longitude: 121.0, latitude:  23.5, zoom:  6.5 },
-  HK: { longitude: 114.2, latitude:  22.3, zoom:  9 },
+  HK: { longitude: 114.2, latitude:  22.3, zoom:  9.5 },
   SG: { longitude: 103.8, latitude:   1.4, zoom: 10 },
   US: { longitude: -98.5, latitude:  39.5, zoom:  3.5 },
   CA: { longitude: -96.0, latitude:  55.0, zoom:  3 },
