@@ -136,7 +136,9 @@ function CyberCountrySelect({
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  const current = value ? COUNTRIES.find((c) => c.code === value) : null;
+  const current = value === "KR-SEOUL"
+    ? { code: "KR", name: "대한민국/서울" }
+    : value ? COUNTRIES.find((c) => c.code === value) : null;
 
   const itemStyle = (isSelected: boolean): React.CSSProperties => ({
     width: "100%",
@@ -202,15 +204,30 @@ function CyberCountrySelect({
             세계지도
           </button>
           <div style={{ height: 1, background: t.legendBorder, margin: "2px 0" }} />
-          {COUNTRIES.map((c) => (
-            <button
-              key={c.code}
-              style={itemStyle(value === c.code)}
-              onClick={() => { onChange(c.code); setOpen(false); }}
-            >
-              {c.code} {c.name}
-            </button>
-          ))}
+          {COUNTRIES.flatMap((c) => {
+            const btn = (
+              <button
+                key={c.code}
+                style={itemStyle(value === c.code)}
+                onClick={() => { onChange(c.code); setOpen(false); }}
+              >
+                {c.code} {c.name}
+              </button>
+            );
+            if (c.code === "KR") {
+              return [
+                btn,
+                <button
+                  key="KR-SEOUL"
+                  style={{ ...itemStyle(value === "KR-SEOUL"), paddingLeft: 20 }}
+                  onClick={() => { onChange("KR-SEOUL"); setOpen(false); }}
+                >
+                  KR 대한민국/서울
+                </button>,
+              ];
+            }
+            return [btn];
+          })}
         </div>
       )}
     </div>
